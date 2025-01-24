@@ -1,36 +1,66 @@
 #include <stdio.h>
+#include <stdbool.h>
 #include "libcstring/src/c_string.h"
 #include "linenoise/linenoise.h"
 
-int main(void) {
-    String* upArrowSeq;
-    String* downArrowSeq;
+char* prompt(bool isMultiLine) {
+    if (isMultiLine) {
+        return linenoise("");
+    }
 
-    upArrowSeq = cstring_create(upArrowSeq, "\x1b[A");
-    downArrowSeq = cstring_create(downArrowSeq, "\x1b[B");
+    return linenoise("@ ");
+}
+
+int main(void) {
+    String* exitToken;
+    String* multiLineToken;
+    String* newLineToken;
+
+    exitToken = cstring_create(exitToken, "exit");
+    multiLineToken = cstring_create(multiLineToken, "```");
+    newLineToken = cstring_charToString(newLineToken, '\n');
 
     String* input;
-    String* token;
     char* line;
-    
-    while ((line = linenoise("@ ")) != NULL) {
-        input = cstring_create(input, line);
 
-        token = cstring_create(token, "exit");
-        if (cstring_equals(input, token)) {
+    bool isMultiLine = false;
+    String* invoke;
+    invoke = cstring_create(invoke, "");
+
+    while ((line = prompt(isMultiLine)) != NULL) {
+        input = cstring_create(input, line);
+        if (!isMultiLine && cstring_equals(input, exitToken)) {
             break;
+        } 
+
+        if (cstring_equals(input, multiLineToken)) {
+            isMultiLine = !isMultiLine;
+            if (isMultiLine) {
+                continue;
+            }
+        }
+
+        if (!cstring_equals(input, multiLineToken)) {
+            invoke = cstring_concat(invoke, 3, invoke, input, newLineToken);
+        }
+
+        if (isMultiLine) {
+            continue;
         }
         
         if (input->length > 0) {
-            linenoiseHistoryAdd(input->text);
+            linenoiseHistoryAdd(invoke->text);
             linenoiseHistorySave("history");
         }
 
-        printf("You typed: %s\n", input->text);
+        printf("You typed: %s\n", invoke->text);
 
-        cstring_free(token);
         cstring_free(input);
+
         linenoiseFree(line); 
+
+        cstring_free(invoke);
+        invoke = cstring_create(invoke, "");
     }
 
     return 0;
