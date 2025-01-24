@@ -54,3 +54,4 @@ dkms.conf
 zig-out/
 .zig-cache/
 zig-out/
+history
