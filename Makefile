@@ -1,0 +1,2 @@
+sssh:
+	zig build
